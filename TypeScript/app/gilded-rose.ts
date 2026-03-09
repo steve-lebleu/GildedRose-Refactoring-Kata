@@ -3,7 +3,7 @@ export enum ProductName {
   SULFURAS = 'Sulfuras, Hand of Ragnaros',
   BACKSTAGE_PASS = 'Backstage passes to a TAFKAL80ETC concert',
   CONJURED = 'Conjured',
-};
+}
 
 const MIN_QUALITY = 0;
 const MAX_QUALITY = 50;
