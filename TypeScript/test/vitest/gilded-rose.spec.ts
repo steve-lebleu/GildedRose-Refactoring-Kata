@@ -51,7 +51,7 @@ describe('Gilded Rose - Characterization tests to don\'t burn the house on fire'
       ['should increase by 3 when there are between 1 and 5 days left',   5, 20, 23],
       ['should not exceed 50 with 5 days left',                           5, 48, 50],
       ['should drop to 0 after the concert',                              0, 20,  0],
-    ])('%s', (msg, sellIn, quality, expectedQuality) => {
+    ])('%s', (_desc, sellIn, quality, expectedQuality) => {
       const item = new Item('Backstage passes to a TAFKAL80ETC concert', sellIn, quality);
       new GildedRose([item]).updateQuality();
       expect(item.quality).toBe(expectedQuality);
