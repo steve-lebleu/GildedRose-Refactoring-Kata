@@ -1,3 +1,15 @@
+enum ProductName {
+  AGED_BRIE = 'Aged Brie',
+  SULFURAS = 'Sulfuras, Hand of Ragnaros',
+  BACKSTAGE_PASS = 'Backstage passes to a TAFKAL80ETC concert',
+};
+
+const MIN_QUALITY = 0;
+const MAX_QUALITY = 50;
+
+const BACKSTAGE_PASS_TIER_2_THRESHOLD = 10;
+const BACKSTAGE_PASS_TIER_3_THRESHOLD = 5;
+
 export class Item {
   name: string;
   sellIn: number;
@@ -10,58 +22,74 @@ export class Item {
   }
 }
 
+interface UpdateStrategy {
+  canHandle(item: Item): boolean;
+  update(item: Item): void;
+}
+
+class SulfurasUpdate implements UpdateStrategy {
+  canHandle(item: Item): boolean {
+    return item.name === ProductName.SULFURAS;
+  }
+
+  update(_item: Item): void {}
+}
+
+class AgedBrieUpdate implements UpdateStrategy {
+  canHandle(item: Item): boolean {
+    return item.name === ProductName.AGED_BRIE;
+  }
+
+  update(item: Item): void {
+    if (item.quality < MAX_QUALITY) item.quality++;
+    item.sellIn--;
+    if (item.sellIn < 0 && item.quality < MAX_QUALITY) item.quality++;
+  }
+}
+
+class BackstagePassUpdate implements UpdateStrategy {
+  canHandle(item: Item): boolean {
+    return item.name === ProductName.BACKSTAGE_PASS;
+  }
+
+  update(item: Item): void {
+    if (item.quality < MAX_QUALITY) item.quality++;
+    if (item.sellIn <= BACKSTAGE_PASS_TIER_2_THRESHOLD && item.quality < MAX_QUALITY) item.quality++;
+    if (item.sellIn <= BACKSTAGE_PASS_TIER_3_THRESHOLD && item.quality < MAX_QUALITY) item.quality++;
+    item.sellIn--;
+    if (item.sellIn < 0) item.quality = MIN_QUALITY;
+  }
+}
+
+class DefaultUpdate implements UpdateStrategy {
+  canHandle(_item: Item): boolean {
+    return true;
+  }
+
+  update(item: Item): void {
+    if (item.quality > MIN_QUALITY) item.quality--;
+    item.sellIn--;
+    if (item.sellIn < 0 && item.quality > MIN_QUALITY) item.quality--;
+  }
+}
+
 export class GildedRose {
   items: Array<Item>;
+
+  private strategies: UpdateStrategy[] = [
+    new SulfurasUpdate(),
+    new AgedBrieUpdate(),
+    new BackstagePassUpdate(),
+    new DefaultUpdate(),
+  ];
 
   constructor(items = [] as Array<Item>) {
     this.items = items;
   }
 
   updateQuality() {
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].name != 'Aged Brie' && this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-        if (this.items[i].quality > 0) {
-          if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-            this.items[i].quality = this.items[i].quality - 1
-          }
-        }
-      } else {
-        if (this.items[i].quality < 50) {
-          this.items[i].quality = this.items[i].quality + 1
-          if (this.items[i].name == 'Backstage passes to a TAFKAL80ETC concert') {
-            if (this.items[i].sellIn < 11) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1
-              }
-            }
-            if (this.items[i].sellIn < 6) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1
-              }
-            }
-          }
-        }
-      }
-      if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-        this.items[i].sellIn = this.items[i].sellIn - 1;
-      }
-      if (this.items[i].sellIn < 0) {
-        if (this.items[i].name != 'Aged Brie') {
-          if (this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-            if (this.items[i].quality > 0) {
-              if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                this.items[i].quality = this.items[i].quality - 1
-              }
-            }
-          } else {
-            this.items[i].quality = this.items[i].quality - this.items[i].quality
-          }
-        } else {
-          if (this.items[i].quality < 50) {
-            this.items[i].quality = this.items[i].quality + 1
-          }
-        }
-      }
+    for (const item of this.items) {
+      this.strategies.find((strategy: UpdateStrategy) => strategy.canHandle(item))!.update(item);
     }
 
     return this.items;
