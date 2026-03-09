@@ -1,7 +1,8 @@
-enum ProductName {
+export enum ProductName {
   AGED_BRIE = 'Aged Brie',
   SULFURAS = 'Sulfuras, Hand of Ragnaros',
   BACKSTAGE_PASS = 'Backstage passes to a TAFKAL80ETC concert',
+  CONJURED = 'Conjured',
 };
 
 const MIN_QUALITY = 0;
@@ -61,6 +62,18 @@ class BackstagePassUpdate implements UpdateStrategy {
   }
 }
 
+class ConjuredUpdate implements UpdateStrategy {
+  canHandle(item: Item): boolean {
+    return item.name.startsWith(ProductName.CONJURED);
+  }
+
+  update(item: Item): void {
+    item.sellIn--;
+    const decrease = item.sellIn < 0 ? 4 : 2;
+    item.quality = Math.max(MIN_QUALITY, item.quality - decrease);
+  }
+}
+
 class DefaultUpdate implements UpdateStrategy {
   canHandle(_item: Item): boolean {
     return true;
@@ -80,6 +93,7 @@ export class GildedRose {
     new SulfurasUpdate(),
     new AgedBrieUpdate(),
     new BackstagePassUpdate(),
+    new ConjuredUpdate(),
     new DefaultUpdate(),
   ];
 
